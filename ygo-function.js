@@ -457,14 +457,7 @@ $("#js_ygo_button_card_more").on("click", async function () {
 })
 
 $(async function(){
-localStorage.ygo_search_result="";
-fetch('data/ProjectIgnis/deck/ydks.dat')
-.then(res=>res.text())
-.then(data=>data.split("\n"))
-.then(async(fileList)=>{
-for (let select_id of ['ygo_input_deck_card', 'ygo_calc1_input_deck']){
-    remake_option(fileList, select_id);
-}
+remake_option(["magician6.43.ydk", "Zoodiac.ydk"], "ygo_calc1_input_deck");
 const df = await dfjs.DataFrame.fromCSV(ygo_db_url);
 const options=Object.keys(df.toDict());
 remake_option(options, "ygo_calc1_input_item");
@@ -477,7 +470,6 @@ $("#ygo_calc2_input_searchItem").val("name_Jap");
 $("#ygo_calc3_input_item").val("name_Jap");
 
 remake_all();
-});
 })
 
 $("#ygo_calc0_up").on("change", async function(){
