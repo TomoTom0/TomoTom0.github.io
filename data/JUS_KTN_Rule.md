@@ -1,0 +1,1 @@
+/home/tomo_nec/work/rsync/gdis/test/data/JUS_KTN_Rule.md
