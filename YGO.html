@@ -30,7 +30,6 @@
     href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script src='https://cdnjs.cloudflare.com/ajax/libs/async/3.2.0/async.min.js'></script>
-
   <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.min.css">
   <link rel="stylesheet" href="styles.css">
   <style>
@@ -129,6 +128,7 @@
   <div class="android-content mdl-layout__content">
     <a name="top"></a>
 
+
     <div class="android-more-section" style="overflow:auto;">
       <div class="android-section-title mdl-typography--display-1-color-contrast">
         YGO
@@ -139,7 +139,35 @@
             <output type="text" name="ygo_calc0_result_card1" id="ygo_calc0_result_card1"></output>
           </div>
           <div class="mdl-card__supporting-text">
-            Upload / Download<br>
+            Upload / Download
+
+            <label id="ygo_calc0_popup_button_open" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
+              <i class="material-icons" type="button">zoom_in</i>
+            </label>
+            <dialog class="mdl-dialog" id="ygo_calc0_popup" style="overflow: scroll; width: 90%;">
+              <div class="mdl-dialog__content">
+                <output type="text" name="ygo_calc0_popup_content" id="ygo_calc0_popup_content"></output>
+              </div>
+              <div class="mdl-dialog__actions">
+                <button id="ygo_calc0_popup_button_close" type="button" class="mdl-button close">Close</button>
+              </div>
+            </dialog>
+            <br>
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mediumwidth">
+              <select class="mdl-textfield__input" name="ygo_calc0_input_fileFormat" id="ygo_calc0_input_fileFormat">
+                <option value="deck-id">deck (id)</option>
+                <option value="deck-name_Eng">deck (name_Eng)</option>
+                <option value="deck-name_Jap">deck (name_Jap)</option>
+                <option value="deck-name_FullWidth_Jap">deck (name_FullWidth_Jap)</option>
+                <option value="cache-limited">cache about the present deck</option>
+                <option value="cache-all">all caches</option>
+                <option value="cache-all_including_deck">all caches including decks</option>
+              </select>
+              <label class="mdl-textfield__label" for="ygo_calc0_input_fileFormat">format</label>
+              <div class="mdl-tooltip" data-mdl-for="ygo_calc0_input_fileFormat">
+                format of upload / download file
+              </div>
+            </div>
             <label id="ygo_calc0_up_icon" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
               <i class="material-icons">cloud_upload</i>
               <input type="file" id="ygo_calc0_up" style="display: none;" accept="text/*.ydk|*.txt|*.dat" multiple>
@@ -153,20 +181,10 @@
             <div class="mdl-tooltip" data-mdl-for="ygo_calc0_down">
               <h5>download</h5> <strong>file</strong>
             </div>
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label smallwidth">
-              <select class="mdl-textfield__input" name="ygo_calc0_input_fileFormat" id="ygo_calc0_input_fileFormat">
-                <option value="deck-id">deck (id)</option>
-                <option value="deck-name_Eng">deck (name_Eng)</option>
-                <option value="deck-name_Jap">deck (name_Jap)</option>
-                <option value="cache-limited">export/import the cache about the present deck</option>
-                <option value="cache_all">export/import all caches</option>
-                <option value="cache_all_include_deck">export/import all caches including decks</option>
-              </select>
-              <label class="mdl-textfield__label" for="ygo_calc0_input_fileFormat">format</label>
-              <div class="mdl-tooltip" data-mdl-for="ygo_calc0_input_fileFormat">
-                format of upload / download file
-              </div>
-            </div>
+            <label id="ygo_calc0_button_reset" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
+              <i class="material-icons" type="button">clear</i>
+            </label>
+
             <br>
             Select Deck
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label smallwidth">
@@ -182,6 +200,12 @@
             </label>
             <div class="mdl-tooltip" data-mdl-for="ygo_calc0_button_preview">
               preview selected deck in the format
+            </div>
+            <label id="ygo_calc0_button_delete" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
+              <i class="material-icons" type="button">delete</i>
+            </label>
+            <div class="mdl-tooltip" data-mdl-for="ygo_calc0_button_delete">
+              delete selected deck after warning
             </div>
 
             <br>
@@ -216,7 +240,27 @@
             </div>
           </div>
           <div class="mdl-card__supporting-text">
-            Make Each List<br>
+            Make Each List
+            <label id="ygo_calc3_popup_button_open" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
+              <i class="material-icons" type="button">zoom_in</i>
+            </label>
+            <dialog class="mdl-dialog" id="ygo_calc3_popup" style="overflow: scroll; width: 90%;">
+              <div class="mdl-dialog__content">
+                <div class="mdl-containerflex">
+                  <div class="mdl-containerflex__item" style="width: 50%;">
+                    <output type="text" name="ygo_calc3_popup_content1" id="ygo_calc3_popup_content1"></output>
+                  </div>
+                  <div class="mdl-containerflex__item" style="width: 50%;">
+                    <output type="text" name="ygo_calc3_popup_content2" id="ygo_calc3_popup_content2"></output>
+                  </div>
+                </div>
+              </div>
+              <div class="mdl-dialog__actions">
+                <button id="ygo_calc3_popup_button_close" type="button" class="mdl-button close">Close</button>
+              </div>
+            </dialog>
+
+            <br>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label verysmallwidth">
               <select class="mdl-textfield__input" name="ygo_calc3_input_list" id="ygo_calc3_input_list">
                 <option>Set</option>
@@ -229,12 +273,7 @@
                 Set / Hand / Group / Search
               </div>
             </div>
-            <label id="ygo_calc3_button_add" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
-              <i class="material-icons" type="button">add</i>
-            </label>
-            <div class="mdl-tooltip" data-mdl-for="ygo_calc3_button_add">
-              <h5>add</h5> selected item into candidates
-            </div>
+
             <label id="ygo_calc3_button_submit" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
               <i class="material-icons" type="button">exit_to_app</i>
             </label>
@@ -265,6 +304,12 @@
             <div class="mdl-tooltip" data-mdl-for="ygo_calc3_button_undo">
             <h5>erase</h5> last candidate
             </div>
+            <label id="ygo_calc3_button_add" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
+              <i class="material-icons" type="button">add</i>
+            </label>
+            <div class="mdl-tooltip" data-mdl-for="ygo_calc3_button_add">
+              <h5>add</h5> selected item into candidates
+            </div>
 
             <br>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label smallwidth">
@@ -278,7 +323,7 @@
               <label class="mdl-textfield__label" for="ygo_calc3_input_condition"></label>
             </div>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label smallwidth">
-              <input class="mdl-textfield__input" name="ygo_calc3_input_keyword" id="ygo_calc3_input_keyword" list="ygo_calc3_input_keyword_list">
+              <input class="mdl-textfield__input" name="ygo_calc3_input_keyword" id="ygo_calc3_input_keyword" list="ygo_calc3_input_keyword_list" onkeypress="presskey(event.keyCode, '3_add');">
               </input>
               <datalist id="ygo_calc3_input_keyword_list"></datalist>
               <label class="mdl-textfield__label" for="ygo_calc3_input_keyword">keyword</label>
@@ -306,7 +351,7 @@
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label verysmallwidth">
               <select class="mdl-textfield__input" name="ygo_calc1_input_addition" id="ygo_calc3_input_addition">
               </select>
-              <label class="mdl-textfield__label" for="ygo_calc1_input_addition">Addition</label>
+              <label class="mdl-textfield__label" for="ygo_calc1_input_addition"></label>
             </div>
 
 
@@ -324,8 +369,6 @@
           <div class="mdl-card__bgcolor_long" style="overflow: scroll;">
             <div class="mdl-containerflex">
               <div class="mdl-containerflex__item mediumwidth">
-                <output type="text" name="ygo_calc5_result_card3" id="ygo_calc5_result_card3">. </output>
-                <br>
                 <output type="text" name="ygo_calc5_result_card1" id="ygo_calc5_result_card1"></output>
               </div>
               <div class="mdl-containerflex__item mediumwidth">
@@ -334,19 +377,75 @@
             </div>
           </div>
           <div class="mdl-card__supporting-text">
-            Calc<br>
-            <label id="ygo_calc5_button_calc" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
-              <i class="material-icons" type="button">poll</i>
+            Calc
+            <label id="ygo_calc5_popup_button_open" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
+              <i class="material-icons" type="button">zoom_in</i>
             </label>
-            <div class="mdl-tooltip" data-mdl-for="ygo_calc5_button_calc">
-            <h5>calculate</h5>
+            <dialog class="mdl-dialog" id="ygo_calc5_popup" style="overflow: scroll; width: 90%;">
+              <div class="mdl-dialog__content">
+                <div class="mdl-containerflex">
+                  <div class="mdl-containerflex__item" style="width: 50%;">
+                    <output type="text" name="ygo_calc5_popup_content1" id="ygo_calc5_popup_content1"></output>
+                  </div>
+                  <div class="mdl-containerflex__item" style="width: 50%;">
+                    <output type="text" name="ygo_calc5_popup_content2" id="ygo_calc5_popup_content2"></output>
+                  </div>
+                </div>
+              </div>
+              <div class="mdl-dialog__actions">
+                <button id="ygo_calc5_popup_button_close" type="button" class="mdl-button close">Close</button>
+              </div>
+            </dialog>
+
+            <br>
+            <div class="mdl-containerflex">
+              <div class="mdl-containerflex__item" style="width: 50%;">
+                <label id="ygo_calc5_button_search" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
+                  <i class="material-icons" type="button">search</i>
+                </label>
+                <div class="mdl-tooltip" data-mdl-for="ygo_calc5_button_search">
+                  <h5>search</h5> cards in the deck
+                </div>
+                <label id="ygo_calc5_button_calc" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
+                  <i class="material-icons" type="button">poll</i>
+                </label>
+                <div class="mdl-tooltip" data-mdl-for="ygo_calc5_button_calc">
+                <h5>calculate</h5>
+                </div>
+                <label id="ygo_calc5_button_draw" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
+                  <i class="material-icons" type="button">style</i>
+                </label>
+                <div class="mdl-tooltip" data-mdl-for="ygo_calc5_button_draw">
+                  <h5>draw</h5> 5 cards and judge
+                </div>
+              </div>
+              <div class="mdl-containerflex__item" style="width: 50%;">
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="ygo_calc5_check_search_include">
+                  <input type="checkbox" id="ygo_calc5_check_search_include" class="mdl-checkbox__input">
+                  <span class="mdl-checkbox__label">searcher</span>
+                  <div class="mdl-tooltip" data-mdl-for="ygo_calc5_check_search_include">
+                    considering search cards
+                  </div>
+                </label>
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="ygo_calc5_check_search_unique">
+                  <input type="checkbox" id="ygo_calc5_check_search_unique" class="mdl-checkbox__input">
+                  <span class="mdl-checkbox__label">unique</span>
+                  <div class="mdl-tooltip" data-mdl-for="ygo_calc5_check_search_unique">
+                    obtain unique results
+                  </div>
+                </label>
+                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="ygo_calc5_check_search_all">
+                  <input type="checkbox" id="ygo_calc5_check_search_all" class="mdl-checkbox__input">
+                  <span class="mdl-checkbox__label">from all cards</span>
+                  <div class="mdl-tooltip" data-mdl-for="ygo_calc5_check_search_all">
+                    search from all cards not even included in the deck
+                  </div>
+                </label>
+              </div>
+              
             </div>
-            <label id="ygo_calc5_button_draw" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
-              <i class="material-icons" type="button">style</i>
-            </label>
-            <div class="mdl-tooltip" data-mdl-for="ygo_calc5_button_draw">
-              <h5>draw</h5> 5 cards and judge
-            </div>
+            Edit Each List <br>
+            
             <label id="ygo_calc5_button_rename" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
               <i class="material-icons" type="button">text_format</i>
             </label>
@@ -366,13 +465,13 @@
             <div class="mdl-tooltip" data-mdl-for="ygo_calc5_button_deleteAll">
             <h5>delete all</h5> items in the deck
             </div>
-            <br>
             <label id="ygo_calc5_button_erase" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
               <i class="material-icons" type="button">backspace</i>
             </label>
             <div class="mdl-tooltip" data-mdl-for="ygo_calc5_button_erase">
             <h5>erase</h5> inputted name
             </div>
+            <br>
 
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label verysmallwidth">
               <select class="mdl-textfield__input" name="ygo_calc5_input_list" id="ygo_calc5_input_list">
@@ -395,37 +494,12 @@
               </div>
             </div>
             <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label smallwidth">
-              <input class="mdl-textfield__input" name="ygo_calc5_input_name" id="ygo_calc5_input_name">
+              <input class="mdl-textfield__input" name="ygo_calc5_input_name" id="ygo_calc5_input_name" onkeypress="presskey(event.keyCode, '5_rename');">
               </input>
               <label class="mdl-textfield__label" for="ygo_calc5_input_name">New Name...</label>
             </div>
             <br>
-            <div class="mdl-containerflex">
-              <div class="mdl-containerflex__item" style="width: 50%;">
-                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="ygo_calc5_check_search_include">
-                  <input type="checkbox" id="ygo_calc5_check_search_include" class="mdl-checkbox__input">
-                  <span class="mdl-checkbox__label">searcher</span>
-                  <div class="mdl-tooltip" data-mdl-for="ygo_calc5_check_search_include">
-                    considering search cards
-                  </div>
-                </label>
-                <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect" for="ygo_calc5_check_search_unique">
-                  <input type="checkbox" id="ygo_calc5_check_search_unique" class="mdl-checkbox__input">
-                  <span class="mdl-checkbox__label">unique</span>
-                  <div class="mdl-tooltip" data-mdl-for="ygo_calc5_check_search_unique">
-                    obtain unique results
-                  </div>
-                </label>
-              </div>
-              <div class="mdl-containerflex__item" style="width: 50%;">
-                <label id="ygo_calc5_button_search" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
-                  <i class="material-icons" type="button">search</i>
-                </label>
-                <div class="mdl-tooltip" data-mdl-for="ygo_calc5_button_search">
-                  <h5>search</h5> cards in the deck
-                </div>
-              </div>
-            </div>
+            
           </div>
         </div>
 
@@ -482,14 +556,15 @@
   </footer>    </div>
   </div>
 
-  <a href="https://github.com/google/material-design-lite/blob/mdl-1.x/templates/android-dot-com/" target="_blank"
+  <!--<a href="https://github.com/google/material-design-lite/blob/mdl-1.x/templates/android-dot-com/" target="_blank"
     id="view-source"
     class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-color--accent mdl-color-text--accent-contrast">View
-    Source</a>
+    Source</a> -->
   <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
   <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="https://gmousse.github.io/dataframe-js/dist/dataframe.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/jquery.magnific-popup.min.js"></script>
   <script src="function.js"></script>
   <script src="ygo-function.js"></script>
 
