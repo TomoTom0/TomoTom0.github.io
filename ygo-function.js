@@ -15,16 +15,7 @@ const ygo_db_url = "data/ProjectIgnis/ygo_db.csv";
 const listAddition = { search: ["From", "To"], set: ["And", "Or"] };
 const lowerList = { set: ["set"], hand: ["set", "hand"], group: ["set", "hand", "group"], search: ["set"] }
 
-function presskey(code, calc_id){
-	if(13 === code){
-    if (calc_id=="3_add"){
-      $("#ygo_calc3_button_add").trigger("click");
-    }
-    else if (calc_id=="5_rename"){
-      $("#ygo_calc5_button_rename").trigger("click");
-    }
-	}
-}
+
 
 function remake_option(options, select_id, overWrite = true, values = [], form = "select") {
   const select_id_re = select_id.replace(/^#/, "");
@@ -36,6 +27,26 @@ function remake_option(options, select_id, overWrite = true, values = [], form =
     select.append(option);
   }
 }
+
+function remake_button(body_id = "", button_contents = [], overWrite = true) {
+  const body = $(`#${body_id}`);
+  if (overWrite) $(`#${body_id} button`).remove();
+  button_contents.forEach(d => {
+    const default_conetnt= {type: "button", class: "mdl-button"};
+    const button = $("<button />", {...default_conetnt, ...d}).append(d.value);
+    body.append(button);
+  })
+}
+
+function remake_array(orig_array, form="result", sep="__"){
+  if (form=="candidate") return orig_array.map(d=>d.replace(new RegExp(`${sep}|__|\n`, "g"), "<br>")
+  .replace(/:::::|::::|:::/g, "_").replace(/,/g, " ").replace(/_._/g, "_"));
+  else if (form=="result") return orig_array.map(d=>d.replace(new RegExp(`${sep}|__|\n`, "g"), "<br>")
+  .replace(/_____|____|___|__/g, "<br>").replace(/:::::|::::|:::/g, "_").replace(/,/g, " ").replace(/_\._|\._|_\./g, "_"));
+  else if(form=="result_option") return orig_array.map(d=>d.replace(/:::::|::::|:::/g, "_")
+  .replace(/_____|____|___/g, "_").replace(/,/g, " ").replace(/_._/g, "_"));
+}
+
 
 function obtain_uploaded_deck(obtain_name = false, deck_name = null) {
   const seps = seps_all["ygo_uploaded_deck"];
@@ -62,7 +73,7 @@ async function obtain_main_deck(raw_data = false) {
     const file_url = `data/ProjectIgnis/deck/${deck_name}`;
     data = await fetch(file_url).then(res => res.text())
   }
-  let data_tmp = data.replace(/\r\n|\r(?=[^\n])/g, "\n").split("\n").filter(d=>d);
+  let data_tmp = data.replace(/\r\n|\r(?=[^\n])/g, "\n").split("\n").filter(d => d);
 
   if (raw_data) return data_tmp;
   const main_index = data_tmp.indexOf("#main");
@@ -71,6 +82,13 @@ async function obtain_main_deck(raw_data = false) {
     .filter((_, index) => index > main_index && index < extra_index)
     .filter(d => !d.startsWith("#"));
 }
+
+async function obtain_default_deck_names(){
+  return await fetch("data/ProjectIgnis/deck/ydks.dat")
+  .then(res => res.text())
+  .then(data => data.split("\n"));
+}
+
 
 async function translate_deck(deck_name = "", file_format = "deck-id") {
   if (!deck_name) return [];
@@ -84,6 +102,24 @@ async function translate_deck(deck_name = "", file_format = "deck-id") {
     });
   }
   return deck_data;
+}
+
+function import_cache(data, limit_name=null, include_deck=true) {
+  data_json = JSON.parse(data);
+  for(key of Object.keys(seps_all)){
+    const seps=seps_all[key];
+    let before_storage=[];
+    if (localStorage[key]) before_storage=localStorage[key].split(seps[2]);
+    let data_json_tmp=[];
+    if (data_json[key]) data_json_tmp=data_json_tmp;
+    let before_storage_tmp=[];
+    if (key=="ygo_uploaded_deck") {
+      if (include_deck) before_storage_tmp=data_json_tmp;
+    }
+    else if (!limit_name) before_storage_tmp=data_json_tmp.filter(d=>d.split([seps[0]])[0]==limit_name);
+    else before_storage_tmp=data_json_tmp.filter(d=>d.indexOf(seps[0])!=-1 && d.indexOf(seps[1])!=-1);
+    localStorage[key]=Array.from(new Set(before_storage.concat(before_storage_tmp))).join(seps[2]);
+  }
 }
 
 async function remake_all() {
@@ -185,20 +221,18 @@ async function remake_calc0_result() {
   let options = before_ygo_uploaded_deck.map(d => d.split(seps[1])[0]);
   remake_option(options, "ygo_calc0_input_anotherDeck");
   remake_option(options, "ygo_calc0_input_deck");
-  fetch("data/ProjectIgnis/deck/ydks.dat")
-    .then(res => res.text())
-    .then(data => data.split("\n"))
-    .then(async (fileList) => {
-      remake_option(fileList, "ygo_calc0_input_deck", false);
-      remake_option(fileList, "ygo_calc0_input_anotherDeck", false);
-    })
+  const fileList=await obtain_default_deck_names();
+  remake_option(fileList, "ygo_calc0_input_deck", false);
+  remake_option(fileList, "ygo_calc0_input_anotherDeck", false);
+
 }
+
 
 async function remake_calc3_option(change_condition = true, change_item = true, change_addition = true) {
   const selectedList = $("#ygo_calc3_input_list").val().toLowerCase();
   const selectedItem = $("#ygo_calc3_input_item").val();
 
-  if (change_addition){
+  if (change_addition) {
     if (Object.keys(listAddition).indexOf(selectedList) != -1) {
       remake_option(listAddition[selectedList], "ygo_calc3_input_addition");
     }
@@ -227,13 +261,11 @@ async function remake_calc3_option(change_condition = true, change_item = true, 
 async function remake_calc3_result() {
   const selectedList = $("#ygo_calc3_input_list").val().toLowerCase();
   const candidates = operate_storage(`ygo_${selectedList}_candidate`, "obtain");
-  seps=seps_all[`ygo_${selectedList}_candidate`];
-  $("#ygo_calc3_result_card1").html(candidates.join("<br><br>").replace(new RegExp(`${seps[1]}|__|\n`, "g"), "<br>")
-    .replace(/:::::|::::|:::/g, "_").replace(/,/g, " ").replace(/_._/g, "_"));
-  seps2=seps_all[`ygo_${selectedList}`];
+  seps = seps_all[`ygo_${selectedList}_candidate`];
+  $("#ygo_calc3_result_card1").html(remake_array(candidates, "candidate", seps[1]).join("<br><br>"));
+  seps2 = seps_all[`ygo_${selectedList}`];
   const results = operate_storage(`ygo_${selectedList}`, "obtain");
-  $("#ygo_calc3_result_card2").html(results.join("<br><br>").replace(new RegExp(`${seps2[1]}|__|\n`, "g"), "<br>")
-  .replace(/_____|____|___|__/g, "<br>").replace(/:::::|::::|:::/g, "_").replace(/,/g, " ").replace(/_\._|\._|_\./g, "_"));
+  $("#ygo_calc3_result_card2").html(remake_array(results, "result", seps2[1]).join("<br><br>"));
   if (selectedList == "search") localStorage.ygo_searchId = JSON.stringify(await ygo_search_check_1());
 }
 async function remake_calc5_search_result() {
@@ -261,7 +293,7 @@ async function remake_calc5_search_result() {
   const selectedList = $("#ygo_calc5_input_list").val();
   const selectedContent = $("#ygo_calc5_input_listContent").val();
   if (selectedList != "Set" || !selectedContent) content = ["Valid SET should be selected."];
-  $("#ygo_calc5_result_card2").html("Search Results<br>" + content.join("<br>"));
+  $("#ygo_calc5_result_card2").html("<b>Search Results</b><br>" + content.join("<br>"));
 }
 
 async function remake_calc5_result_draw() {
@@ -280,7 +312,7 @@ async function remake_calc5_result_draw() {
 
   const seps = seps_all["ygo_hand"];
   const options_new = before_ygo_hands.map((d, index) => ` ${d.split(seps[1])[0]}<br>---${judges_hands[index]}`);
-  $("#ygo_calc5_result_card2").html("Draw Cards<br>" + initial_hand.join("<br>"));
+  $("#ygo_calc5_result_card2").html("<b>Draw Cards</b><br>" + initial_hand.join("<br>"));
   $("#ygo_calc5_result_card1").html(options_new.join("<br>").replace(/:::::|::::|:::/g, "_").replace(/\n/g, "<br>").replace(/,/g, " ").replace(/_._/g, "_"));
 }
 
@@ -289,7 +321,7 @@ async function remake_calc5_result() {
   const selectedList = $("#ygo_calc5_input_list").val().toLowerCase();
 
   let values = operate_storage(`ygo_${selectedList}`, "obtain");
-  const options = values.map(d => d.replace(/:::::|::::|:::/g, "_").replace(/_____|____|___/g, "_").replace(/,/g, " ").replace(/_._/g, "_"));
+  const options = remake_array(values, "result_option");
   remake_option(options, "ygo_calc5_input_listContent", true, values);
 }
 
@@ -316,15 +348,17 @@ async function ygo_judge_speed(ids_sums_tmps, min_maxss, initial_ids, include_se
     keys_tmp.forEach((key, index) => counts_tmp[index] = array_tmp.filter(d => d == key).length);
     counts_tmp.forEach((count, index) => {
       if (count > 1) {
-        const tmp_length=ids_sums_filtered.filter(d => {
-        d.indexOf(keys_tmp[index]) != -1 && d.length == 1}).length;
+        const tmp_length = ids_sums_filtered.filter(d => {
+          d.indexOf(keys_tmp[index]) != -1 && d.length == 1
+        }).length;
         if (tmp_length > 1) ids_sums_filtered.map(d => {
           if (d.indexOf(keys_tmp[index]) != -1 && d.length == 1) return [];
-        else return d;})
+          else return d;
+        })
       }
     })
     const judge_tmps = ids_sums_filtered.map((d, index) => {
-      tmp_length=d.length;
+      tmp_length = d.length;
       const min_max = min_maxs[index].split("-");
       let judge = true;
       if (min_max[0] != "") if (Number(min_max[0]) > tmp_length) judge = false;
@@ -376,7 +410,7 @@ async function ygo_judge(options, initial_ids, include_search = false) {
       })
     });
     const judge_tmps = ids_sums_filtered.map((d, index) => {
-      const tmp_length=d.length;
+      const tmp_length = d.length;
       const min_max = min_maxs[index].split("-");
       let judge = true;
       if (min_max[0] != "") if (Number(min_max[0]) > tmp_length) judge = false;
@@ -395,9 +429,9 @@ async function ygo_search(selectedSets, limited_ids = ["fromDeck"]) {
   if (!selectedSets || !selectedSets[0]) return [];
   let data_main = limited_ids;
   const df = await dfjs.DataFrame.fromCSV(ygo_db_url);
-  let df_deck=df;
+  let df_deck = df;
   if (limited_ids[0] == "fromAllCards") {
-    data_main=df.toDict()["id"];
+    data_main = df.toDict()["id"];
   }
   if (limited_ids[0] == "fromDeck") data_main = await obtain_main_deck().then(_ => _);
   if (limited_ids[0] != "fromAllCards") df_deck = df.filter(row => data_main.indexOf(row.get("id")) != -1);
@@ -405,7 +439,7 @@ async function ygo_search(selectedSets, limited_ids = ["fromDeck"]) {
   const seps = seps_all["ygo_set"];
   const seps2 = seps_all["ygo_set_candidate"];
   const card_sentences = selectedSets.map(d => d.split(seps[1])[1].split(seps2[2]));
- 
+
   const ids_sums = card_sentences.map(card_sentence => {
     let ids_sum = data_main;
     let ids_tmp = [];
@@ -460,16 +494,16 @@ async function ygo_search_check_2(ids_sums_tmp, ids) {
   if (!ids_sums_tmp) return;
   return Array.from(new Set(
     ids_sums_tmp.map((ids_sum) => {
-    ids_add = [];
-    for (index = 0; index < ids.searched.length; index++) {
-      if (ids.searched[index].some(dd => ids_sum.indexOf(dd) != -1))
-        ids_add = ids_add.concat(ids.searcher[index]);
-    }
-    return ids_sum.concat(ids_add);
-  })));
+      ids_add = [];
+      for (index = 0; index < ids.searched.length; index++) {
+        if (ids.searched[index].some(dd => ids_sum.indexOf(dd) != -1))
+          ids_add = ids_add.concat(ids.searcher[index]);
+      }
+      return ids_sum.concat(ids_add);
+    })));
 }
 
-async function calc_from_hands(hands, initial_idss, output_id="") {
+async function calc_from_hands(hands, initial_idss, output_id = "") {
   const seps = seps_all["ygo_hand"];
   const seps2 = seps_all["ygo_hand_candidate"];
   let ids = { searcher: [], searched: [] }
@@ -487,7 +521,7 @@ async function calc_from_hands(hands, initial_idss, output_id="") {
   const cycle_number = initial_idss.length;
   for (initial_ids of initial_idss) {
     count_tmp = count_tmp + 1;
-    if (output_id && count_tmp%500==10) $(`#${output_id}`).val(`Process : ${count_tmp} / ${cycle_number}`)
+    if (output_id && count_tmp % 500 == 10) $(`#${output_id}`).val(`Process : ${count_tmp} / ${cycle_number}`)
     judgess.push(await ygo_judge_speed(ids_sums_tmps, min_maxss, initial_ids, true, ids));
   }
   return judgess;
@@ -501,7 +535,6 @@ $(async function () {
   $("#ygo_input_list").val(initialList);
   remake_option(lowerList[initialList.toLowerCase()].map(d => d[0].toUpperCase() + d.slice(1)).concat(default_keys), "ygo_calc3_input_item");
 
-  //if (!localStorage.deck_name) $("#ygo_calc0_input_deck").val(localStorage.deck_name);
   $("#ygo_calc3_input_item").val("name_Jap");
 
   remake_option([], "ygo_calc0_input_deck");
@@ -509,25 +542,119 @@ $(async function () {
 
   await remake_calc0_result();
   remake_calc3_result();
-  localStorage.ygo_searchId = JSON.stringify(await ygo_search_check_1().then(_=>_));
+  localStorage.ygo_searchId = JSON.stringify(await ygo_search_check_1().then(_ => _));
   remake_calc3_option(true, false, true);
   remake_calc5_result();
 
 });
 
-$("#ygo_calc0_up").on("change", async function () {
-  $("#ygo_calc0_result_card1").val("Uploading ...");
-  files_tmp = await this.files;
-  const seps = seps_all["ygo_uploaded_deck"];
+$("#ygo_calc0_button_up").on("click", async function () {
+  const calc_id=$(this)[0].id.match(/ygo_calc\d/)[0];
+  const popup_id=calc_id+"_popup";
+  let title="UPLOAD";
+  let message = `Select file FORMAT and press UPLOAD.`
+  let button_contents = [{ onclick: `popup_close('${popup_id}')`, value: "Cansel"}];
 
+  const body=$("#ygo_calc0_popup_content2");
+  const div=$("<div>", {class:"mdl-textfield mdl-js-textfield mdl-textfield--floating-label mediumwidth", id:"ygo_calc0_popup_div"}).append("File Format<br>");
+  const select1=$("<select>", {id: "ygo_calc0_popup_up_fileFormat", class:"mdl-textfield__input", onclick:"ygo_calc0_popup_up_fileFormat()"});
+  div.append(select1);
+  div.append("<br>Deck<br>")
+  const select2=$("<select>", {id: "ygo_calc0_popup_deck", class:"mdl-textfield__input"});
+  div.append(select2);
+  body.append(div);
+
+  const values=["deck-id", "deck-name_Eng", "deck-name_Jap", "deck-name_FullWidth_Jap", "cache-limited", "cache-all", "cache-all_including_deck"];
+  const options=["DEFAULT:deck (id)", "deck (name_Eng)", "deck (name_Jap)", "deck (name_FullWidth_Jap)", "cache about the selected deck", "all caches", "all caches including decks"];
+
+  remake_option(options, "ygo_calc0_popup_up_fileFormat", true, values);
+  $(`#${popup_id}`).css("width", "320px");
+  $(`#${popup_id}_title`).html(title);
+  $(`#${popup_id}_content1`).html(message);
+  remake_button(`${popup_id}_actions`, button_contents);
+  //const label=$("<label>", {class:""});
+  const button=$("<label>", {type:"button", class:"mdl-button mdl-js-button mdl-button--file"}).append("Upload");
+  const input=$("<input>", {type:"file", id:"ygo_calc0_popup_button_upload", onChange:"ygo_calc0_popup_upload(this)", accpet:"text/*.ydk|*.txt|*.dat", multiple:"", style:"display: none;"});
+  button.append(input);
+  $(`#${popup_id}_actions`).append(button);
+  popups[popup_id].showModal();
+});
+
+async function ygo_calc0_popup_up_fileFormat(){
+  if (/^cache-limited/.test($("#ygo_calc0_popup_up_fileFormat").val())) {
+    fileList = await obtain_default_deck_names();
+    remake_option(obtain_uploaded_deck(true).concat(fileList), "ygo_calc0_popup_deck");
+  }
+  else {
+    remake_option([], "ygo_calc0_popup_deck");
+  }
+}
+
+$("#ygo_calc0_button_down").on("click", async function(){
+  const calc_id=$(this)[0].id.match(/ygo_calc\d/)[0];
+  const popup_id=calc_id+"_popup";
+
+  let title="UPLOAD";
+  let message = `Select file FORMAT and DECK, then press DOWNLOAD.`
+  let button_contents = [{ onclick: `popup_close('${popup_id}')`, value: "Cansel" },
+  { onclick: 'ygo_calc0_popup_download()', value: "Download" }];
+
+  const body=$("#ygo_calc0_popup_content2");
+  const div=$("<div>", {class:"mdl-textfield mdl-js-textfield mdl-textfield--floating-label mediumwidth", id:"ygo_calc0_popup_div"}).append("File Format<br>");
+  const select1=$("<select>", {id: "ygo_calc0_popup_down_fileFormat", class:"mdl-textfield__input", onclick:"ygo_calc0_popup_down_fileFormat()"});
+  div.append(select1);
+  div.append("<br>Deck<br>")
+  const select2=$("<select>", {id: "ygo_calc0_popup_deck", class:"mdl-textfield__input"});
+  div.append(select2);
+  body.append(div);
+
+  const values=["deck-id", "deck-name_Eng", "deck-name_Jap", "deck-name_FullWidth_Jap", "cache-limited", "cache-all", "cache-all_including_deck"];
+  const options=["deck (id) (DEFAULT)", "deck (name_Eng)", "deck (name_Jap)", "deck (name_FullWidth_Jap)", "cache about the selected deck", "all caches", "all caches including decks"];
+
+  remake_option(options, "ygo_calc0_popup_down_fileFormat", true, values);
+  fileList = await obtain_default_deck_names();
+  remake_option(obtain_uploaded_deck(true).concat(fileList), "ygo_calc0_popup_deck");
+  $(`#${popup_id}`).css("width", "320px");
+  $(`#${popup_id}_title`).html(title);
+  $(`#${popup_id}_content1`).html(message);
+  remake_button(`${popup_id}_actions`, button_contents);
+  popups[popup_id].showModal();
+});
+
+async function ygo_calc0_popup_down_fileFormat(){
+  if (/^cache-all/.test($("#ygo_calc0_popup_down_fileFormat").val())) {
+    remake_option([], "ygo_calc0_popup_deck");
+  } else if (/^cache-limited/.test($("#ygo_calc0_popup_down_fileFormat").val())){
+    let cache_decks=[];
+    for (key of Object.keys(seps_all)){
+      if (key=="ygo_uploaded_deck") continue;
+      const seps=seps_all[key];
+      let before_storage=[];
+      if (localStorage[key]) before_storage=localStorage[key].split(seps[2]);
+      const deck_names_tmp=before_storage.map(d=>d.split(seps[0])[0]);
+      cache_decks=Array.from(new Set(cache_decks.concat(deck_names_tmp)));
+    }
+    remake_option(cache_decks, "ygo_calc0_popup_deck");
+  }
+  else {
+    fileList = await obtain_default_deck_names();
+    remake_option(obtain_uploaded_deck(true).concat(fileList), "ygo_calc0_popup_deck");
+  }
+}
+
+async function ygo_calc0_popup_upload(obj){
+  const calc_id="ygo_calc0";
+  const popup_id=calc_id+"_popup";
+  const file_format = $("#ygo_calc0_popup_up_fileFormat").val();
+  let deck_name_limit = $("#ygo_calc0_popup_deck").val();
+  popup_close(popup_id);
+  $("#ygo_calc0_result_card1").val("Uploading ...");
+  files_tmp = await obj.files;
+  const seps = seps_all["ygo_uploaded_deck"];
   let uploaded_data = [];
   for (file_tmp of files_tmp) uploaded_data.push(`${file_tmp.name}${seps[1]}${await file_tmp.text()}`);
-  const file_format = $("#ygo_calc0_input_fileFormat").val();
   if (/^deck/.test(file_format)) {
-    let before_ygo_uploaded_deck = [];
-    if (localStorage.getItem("ygo_uploaded_deck"))
-      before_ygo_uploaded_deck = localStorage.getItem("ygo_uploaded_deck").split(seps[2]);
-    const deck_names = before_ygo_uploaded_deck.map(d => d.split(seps[1])[0])
+    const deck_names = obtain_uploaded_deck(true);
     if (file_format != "deck-id") {
       let df = await dfjs.DataFrame.fromCSV(ygo_db_url);
       const orig_format = file_format.replace(/^deck-/, "");
@@ -562,19 +689,26 @@ $("#ygo_calc0_up").on("change", async function () {
       return `${deck_name}${seps[1]}${d.split(seps[1])[1]}`;
     })
     const valid_data = uploaded_data.filter(d => d.split(seps[1])[1]);
+    let before_ygo_uploaded_deck = obtain_uploaded_deck(false, null);
     before_ygo_uploaded_deck = before_ygo_uploaded_deck.concat(valid_data);
 
     $("#ygo_calc0_result_card1").html("Uploaded ... " + valid_data.map(d => d.split(seps[1])[0]).join("<br>"))
     localStorage["ygo_uploaded_deck"] = before_ygo_uploaded_deck.join(seps[2]);
     await remake_calc0_result();
   } else if (/^cache/.test(file_format)) {
-    //remake cache
+    if (/limited/.test(file_format)) deck_name_limit=null;
+    const seps_tmp=seps_all["ygo_uploaded_deck"]
+    import_cache(uploaded_data[0].replace(new RegExp(`^[^${seps_tmp[1]}]*${seps_tmp[1]}`), ""), deck_name_limit, /including_deck/.test(file_format));
+    $("#ygo_calc0_result_card1").html("Uploaded ... "+file_format);
   }
-});
+}
 
-$("#ygo_calc0_down").on("click", async function () {
-  const file_format = $("#ygo_calc0_input_fileFormat").val();
-  const dl_file = $("#ygo_calc0_input_deck").val();
+async function ygo_calc0_popup_download(){
+  const file_format = $("#ygo_calc0_popup_down_fileFormat").val();
+  const dl_file = $("#ygo_calc0_popup_deck").val();
+  const calc_id="ygo_calc0";
+  const popup_id=calc_id+"_popup";
+  popup_close(popup_id);
   let dl_name = "";
   let dl_data = "";
   $("#ygo_calc0_result_card1").val("Downloading ...");
@@ -612,7 +746,7 @@ $("#ygo_calc0_down").on("click", async function () {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
-});
+}
 
 $("#ygo_calc0_input_deck").on("click", async function () {
   localStorage.deck_name = $("#ygo_calc0_input_deck").val();
@@ -620,37 +754,157 @@ $("#ygo_calc0_input_deck").on("click", async function () {
 });
 
 $("#ygo_calc0_button_preview").on("click", async function () {
-  const file_format = $("#ygo_calc0_input_fileFormat").val();
+  const calc_id=$(this)[0].id.match(/ygo_calc\d/)[0];
+  const popup_id=calc_id+"_popup";
+  //const file_format = $("#ygo_calc0_input_fileFormat").val();
   const deck_name = $("#ygo_calc0_input_deck").val();
-  const deck_data = await translate_deck(deck_name, file_format);
+  const deck_data = await translate_deck(deck_name, "deck-name_Jap");
   $("#ygo_calc0_result_card1").html(deck_data.join("<br>"));
+  $(`#${popup_id}_title`).html(deck_name);
 });
 
 $("#ygo_calc0_button_delete").on("click", async function () {
-  const deck_name = $("#ygo_calc0_input_deck").val();
+  const calc_id=$(this)[0].id.match(/ygo_calc\d/)[0];
+  const popup_id=calc_id+"_popup";
+  let title="WARNING";
+  let message = `Selected DECK will be deleted.`
+  let button_contents = [{ onclick: `popup_close('${popup_id}')`, value: "Cansel" },
+  { onclick: 'ygo_calc0_button_popup_deleteDeck()', value: "Delete" }];
 
-  //and its settings
-  const warning_message = `WARNING : ${deck_name} will be deleted.
-  <br>If you want to delete, please push DELETE again.
-  <br>If you cancel, push another button as like CLEAR.`
+  const uploaded_names=obtain_uploaded_deck(true);
+  if (uploaded_names.length==0){
+    title="CAUTION";
+    message="There is no uploaded decks.";
+    button_contents = [{ onclick: `popup_close('${popup_id}')`, value: "Close" }]
+  } else {
+    const body=$("#ygo_calc0_popup_content2");
+    const div=$("<div>", {class:"mdl-textfield mdl-js-textfield mdl-textfield--floating-label mediumwidth", id:"ygo_calc0_popup_div"}).append("Uploaded Deck<br>");
+    const select1=$("<select>", {id: "ygo_calc0_popup_deck", class:"mdl-textfield__input"});
+    div.append(select1);
+    body.append(div);
+    remake_option(uploaded_names, "ygo_calc0_popup_deck");
+  }
+
+  $(`#${popup_id}`).css("width", "320px");
+  $(`#${popup_id}_title`).html(title);
+  $(`#${popup_id}_content1`).html(message);
+  remake_button(`${popup_id}_actions`, button_contents);
+  popups[popup_id].showModal();
+});
+
+async function ygo_calc0_button_popup_deleteDeck() {
+  const deck_name = $("#ygo_calc0_popup_deck").val();
   const seps = seps_all["ygo_uploaded_deck"];
-  let before_ygo_uploaded_deck = [];
-  if (localStorage.getItem("ygo_uploaded_deck"))
-    before_ygo_uploaded_deck = localStorage.getItem("ygo_uploaded_deck").split(seps[2]);
-  if (before_ygo_uploaded_deck.every(d => d.split(seps[1])[0] != deck_name)) {
-    $("#ygo_calc0_result_card1").html(`${deck_name} is not uploaded deck,<br>so you can't delete it.`)
+  localStorage["ygo_uploaded_deck"] = obtain_uploaded_deck(false, null).filter(d => d.split(seps[1])[0] != deck_name).join(seps[2]);
+  $("#ygo_calc0_result_card1").html(`${deck_name} has been deleted.`);
+  await remake_calc0_result();
+  popup_close("ygo_calc0_popup");
+}
+
+$("#ygo_calc0_button_copyCache").on("click", async function () {
+  const calc_id=$(this)[0].id.match(/ygo_calc\d/)[0];
+  const popup_id=calc_id+"_popup";
+  let title="COPY CACHE";
+  let message = `from one deck to another`;
+  let button_contents = [
+    { onclick: `popup_close('${popup_id}')`, value: "Cansel" },
+    { onclick: 'ygo_calc0_button_popup_copyCache()', value: "Delete" }];
+
+  const body=$("#ygo_calc0_popup_content2");
+  const div=$("<div>", {class:"mdl-textfield mdl-js-textfield mdl-textfield--floating-label mediumwidth", id:"ygo_calc0_popup_div"}).append("From<br>");
+  const select1=$("<select>", {id: "ygo_calc0_popup_deckFrom", class:"mdl-textfield__input"});
+  div.append(select1);
+  div.append("<br>To<br>")
+  const select2=$("<select>", {id: "ygo_calc0_popup_deckTo", class:"mdl-textfield__input"});
+  div.append(select2);
+  body.append(div);
+  let cache_decks=[];
+  for (key of Object.keys(seps_all)){
+    if (key=="ygo_uploaded_deck") continue;
+    const seps=seps_all[key];
+    let before_storage=[];
+    if (localStorage[key]) before_storage=localStorage[key].split(seps[2]);
+    const deck_names_tmp=before_storage.map(d=>d.split(seps[0])[0]);
+    cache_decks=Array.from(new Set(cache_decks.concat(deck_names_tmp)));
   }
-  else if ($("#ygo_calc0_result_card1").html() == warning_message) {
-    localStorage["ygo_uploaded_deck"] = before_ygo_uploaded_deck.filter(d => d.split(seps[1])[0] != deck_name).join(seps[2]);
-    $("#ygo_calc0_result_card1").html(`${deck_name} has been deleted.`);
-    await remake_calc0_result();
-  }
-  else $("#ygo_calc0_result_card1").html(warning_message);
+  remake_option(cache_decks, "ygo_calc0_popup_deckFrom");
+  const fileList=await obtain_default_deck_names();
+  remake_option(obtain_uploaded_deck(true).concat(fileList), "ygo_calc0_popup_deckTo");
+
+  $(`#${popup_id}`).css("width", "320px");
+  $(`#${popup_id}_title`).html(title);
+  $(`#${popup_id}_content1`).html(message);
+  remake_button(`${popup_id}_actions`, button_contents);
+  popups[popup_id].showModal();
 
 });
 
-$("#ygo_calc0_button_reset").on("click", function () {
+async function ygo_calc0_button_popup_copyCache() {
+  const deck_name_from = $("#ygo_calc0_popup_deckFrom").val();
+  const deck_name_to = $("#ygo_calc0_popup_deckTo").val();
+  for(key of Object.keys(seps_all)){
+    if (key=="ygo_uploaded_deck") continue;
+    const seps=seps_all[key];
+    let before_storage=[];
+    if (localStorage[key]) before_storage=localStorage[key].split(seps[2]);
+    before_storage_tmp=before_storage
+    .filter(d=>d.split([seps[0]])[0]==deck_name_from)
+    .map(d=>deck_name_to+seps[1]+d.split(seps[0]).slice(1).join(seps[1]));
+    localStorage[key]=Array.from(new Set(before_storage.concat(before_storage_tmp))).join(seps[2]);
+  }
+  $("#ygo_calc0_result_card1").html(`${deck_name_to}'s CACHE has been copied from ${deck_name_from}.`);
+  popup_close("ygo_calc0_popup");
+}
 
+
+$("#ygo_calc0_button_deleteCache").on("click", async function () {
+  const calc_id=$(this)[0].id.match(/ygo_calc\d/)[0];
+  const popup_id=calc_id+"_popup";
+  let title="WARNING";
+  let message = `CACHE of selected deck will be deleted.`
+  let button_contents = [
+    { onclick: `popup_close('${popup_id}')`, value: "Cansel" },
+    { onclick: 'ygo_calc0_button_popup_deleteCache()', value: "Delete" }];
+
+  const body=$("#ygo_calc0_popup_content2");
+  const div=$("<div>", {class:"mdl-textfield mdl-js-textfield mdl-textfield--floating-label mediumwidth", id:"ygo_calc0_popup_div"}).append("Delete Cache<br>");
+  const select1=$("<select>", {id: "ygo_calc0_popup_deckFrom", class:"mdl-textfield__input"});
+  div.append(select1);
+  body.append(div);
+
+  let cache_decks=[];
+  for (key of Object.keys(seps_all)){
+    if (key=="ygo_uploaded_deck") continue;
+    const seps=seps_all[key];
+    let before_storage=[];
+    if (localStorage[key]) before_storage=localStorage[key].split(seps[2]);
+    const deck_names_tmp=before_storage.map(d=>d.split(seps[0])[0]);
+    cache_decks=Array.from(new Set(cache_decks.concat(deck_names_tmp)));
+  }
+  remake_option(cache_decks, "ygo_calc0_popup_deckFrom");
+
+  $(`#${popup_id}`).css("width", "320px");
+  $(`#${popup_id}_title`).html(title);
+  $(`#${popup_id}_content1`).html(message);
+  remake_button(`${popup_id}_actions`, button_contents);
+  popups[popup_id].showModal();
+});
+
+async function ygo_calc0_button_popup_deleteCache() {
+  const deck_name_for = $("#ygo_calc0_popup_deckFrom").val();
+  for(key of Object.keys(seps_all)){
+    if (key=="ygo_uploaded_deck") continue;
+    const seps=seps_all[key];
+    let before_storage=[];
+    if (localStorage[key]) before_storage=localStorage[key].split(seps[2]);
+    localStorage[key]=before_storage
+    .filter(d=>d.split([seps[0]])[0]!=deck_name_for).join(seps[2]);
+  }
+  $("#ygo_calc0_result_card1").html(`${deck_name_for}'s CACHE has been deleted.`);
+  popup_close("ygo_calc0_popup");
+}
+
+$("#ygo_calc0_button_reset").on("click", function () {
   $("#ygo_calc0_result_card1").val("");
 });
 
@@ -687,12 +941,12 @@ $("#ygo_calc3_button_add").on("click", function () {
   const selectedCondition = $("#ygo_calc3_input_condition").val();
   const selectedKeyword = $("#ygo_calc3_input_keyword").val();
   const selectedAddition = $("#ygo_calc3_input_addition").val();
-  let min_number = $("#ygo_calc3_input_minNumber").val();
-  const max_number = $("#ygo_calc3_input_maxNumber").val();
+  let min_number = $("#ygo_calc3_input_minNumber").val()-0;
+  const max_number = $("#ygo_calc3_input_maxNumber").val()-0;
 
   let name = null;
   if (selectedList == "hand") {
-    if (!min_number && !max_number) min_number = 1;
+    if (min_number==0 && max_number==0) min_number = 1;
     name = `${min_number}-${max_number}`;
   }
   else if (selectedList == "search") {
@@ -706,7 +960,7 @@ $("#ygo_calc3_button_add").on("click", function () {
   if (localStorage.default_keys.indexOf(selectedItem) != -1) {
     list_index_in = 0;
     let andOr = selectedAddition;
-    if (selectedList != "set" || !andOr) andOr = "And";
+    if (selectedList != "set" || !andOr || operate_storage("ygo_set_candidate", "obtain").length == 0) andOr = "And";
     content = [selectedItem, selectedCondition, selectedKeyword, andOr].join(",");
   }
   else if (["Set", "Hand", "Group"].indexOf(selectedItem) != -1) {
@@ -754,8 +1008,6 @@ $("#ygo_calc3_button_erase").on("click", function () {
 });
 
 $("#ygo_calc3_button_sync").on("click", async function () {
-  const selectedKeyword = $("#ygo_calc3_input_keyword").val();
-  const before_storage=operate_storage("ygo_set", "obtain");
 
   remake_calc3_result();
   remake_calc3_option(true, false);
@@ -815,7 +1067,7 @@ $("#ygo_calc5_button_calc").on("click", async function () {
 
   const cycle_number = 1000;
   const initial_idss = [...Array(cycle_number).keys()].map(cycle_now => {
-    if (cycle_now==Number(cycle_number/2)) $("#ygo_calc5_result_card1").html("Process ..");
+    if (cycle_now == Number(cycle_number / 2)) $("#ygo_calc5_result_card1").html("Process ..");
     const random_tmp = [...Array(deck_size).keys()].map(__ => Math.random());
     const random_number = random_tmp.slice().sort().map(d => random_tmp.indexOf(d));
     return random_number.map(d => data_main[d]).slice(0, 5);
@@ -843,7 +1095,7 @@ $("#ygo_calc5_button_calc").on("click", async function () {
     output.push(`${group_name}<br>---${judgess_tmp.filter(d => d.some(dd => dd == "O")).length} / ${cycle_number}`)
   }
 
-  $("#ygo_calc5_result_card1").html("Probabilities<br>" + output.join("<br>"));
+  $("#ygo_calc5_result_card1").html("<b>Probabilities</b><br>" + output.join("<br>"));
 });
 
 $("#ygo_calc5_button_search").on("click", async function () {
@@ -863,14 +1115,13 @@ $("#ygo_calc5_button_search").on("click", async function () {
 $("#ygo_calc5_button_rename").on("click", function () {
   const selectedList = $("#ygo_calc5_input_list").val().toLowerCase();
   const selectedContent = $("#ygo_calc5_input_listContent").val();
-  const name = $("#ygo_calc5_input_name").val();
+  const name=$("#ygo_calc5_popup_newName").val("");
 
   operate_storage(`ygo_${selectedList}`, "rename", selectedContent, name);
   remake_calc5_result();
   remake_calc3_result();
-  $("#ygo_calc5_input_name").val("");
-
 });
+
 
 $("#ygo_calc5_button_erase").on("click", function () {
   $("#ygo_calc5_input_name").val("");
@@ -886,41 +1137,66 @@ $("#ygo_calc5_button_delete").on("click", function () {
 
 });
 
-$("#ygo_calc5_button_deleteAll").on("click", function () {
+
+
+$("#ygo_calc5_button_deleteAll").on("click", async function () {
+  const deck_name = $("#ygo_calc0_input_deck").val();
+  const selectedList = $("#ygo_calc5_input_list").val().toLowerCase();
+  const calc_id=$(this)[0].id.match(/ygo_calc\d/)[0];
+  const popup_id=calc_id+"_popup";
+  let title=`WARNING : ${selectedList.toUpperCase()}`;
+  let message = `All <b>${selectedList.toUpperCase()}</b>s of ${deck_name} will be deleted.`;
+  let button_contents = [
+    { onclick: `popup_close('${popup_id}')`, value: "Cansel" },
+    { onclick: 'ygo_calc5_button_popup_deleteAll()', value: "Delete" }];
+  $(`#${popup_id}_title`).html(title);
+  $(`#${popup_id}_content1`).html(message+"<br><br>"+remake_array(operate_storage(`ygo_${selectedList}`, "obtain"), "result").join("<br><br>"));
+  remake_button(`${popup_id}_actions`, button_contents);
+  popups[popup_id].showModal();
+});
+
+function ygo_calc5_button_popup_deleteAll() {
   const selectedList = $("#ygo_calc5_input_list").val().toLowerCase();
 
   operate_storage(`ygo_${selectedList}`, "deleteAll");
   remake_calc5_result();
   remake_calc3_result();
+  popup_close("ygo_calc5_popup");
 
-});
+};
 
-let popups = ["0", "3", "5"].map(d=> document.querySelector(`#ygo_calc${d}_popup`));
-popups.forEach((popup, index)=> {
-  //let showDialogButton=$(`#ygo_calc${[0,3,5][index]}_popup_button_open`);
-  if (! popup.showModal) dialogPolyfill.registerDialog(popup);
-})
-$("#ygo_calc0_popup_button_open").on("click", ()=>{
-  $("#ygo_calc0_popup_content").html($("#ygo_calc0_result_card1").html());
-  popups[0].showModal();
-})
-$("#ygo_calc0_popup_button_close").on("click", ()=>{
-  popups[0].close();
-})
-$("#ygo_calc3_popup_button_open").on("click", ()=>{
-  $("#ygo_calc3_popup_content1").html($("#ygo_calc3_result_card1").html());
-  $("#ygo_calc3_popup_content2").html($("#ygo_calc3_result_card2").html());
 
-  popups[1].showModal();
+let popups = {};
+["0", "3", "5"].map(d=>`#ygo_calc${d}_popup`).forEach(d => popups[d.replace(/^#/, "")]=document.querySelector(d));
+Object.keys(popups).forEach(key => {
+  popup=popups[key];
+  if (!popup.showModal) dialogPolyfill.registerDialog(popup);
 })
-$("#ygo_calc3_popup_button_close").on("click", ()=>{
-  popups[1].close();
-})
-$("#ygo_calc5_popup_button_open").on("click", ()=>{
-  $("#ygo_calc5_popup_content1").html($("#ygo_calc5_result_card1").html());
-  $("#ygo_calc5_popup_content2").html($("#ygo_calc5_result_card2").html());
-  popups[2].showModal();
-})
-$("#ygo_calc5_popup_button_close").on("click", ()=>{
-  popups[2].close();
-})
+
+function popup_open(obj_id){
+  const popup_id=obj_id.match(/ygo_calc\d_popup/)[0];
+  const calc_id=popup_id.match(/ygo_calc\d/)[0];
+  ["1", "2"].forEach(d=>$(`#${popup_id}_content${d}`).html($(`#${calc_id}_result_card${d}`).html()))
+  $(`#${popup_id}`).css("width", "90%");
+  popups[popup_id].showModal();
+}
+
+function popup_close(obj_id){
+  const popup_id=obj_id.match(/ygo_calc\d_popup/)[0];
+  ["1", "2"].forEach(d=>$(`#${popup_id}_content${d}`).empty());
+  $(`#${popup_id}_title`).html();
+  const button_contents = [{ onclick: `popup_close('${popup_id}')`, value: "Close" }];
+  remake_button(`${popup_id}_actions`, button_contents);
+  popups[popup_id].close();
+}
+
+function presskey(code, calc_id) {
+  if (13 === code) {
+    if (calc_id == "3_add") {
+      $("#ygo_calc3_button_add").trigger("click");
+    }
+    else if (calc_id == "5_rename") {
+      $("#ygo_calc5_button_rename").trigger("click");
+    }
+  }
+}
