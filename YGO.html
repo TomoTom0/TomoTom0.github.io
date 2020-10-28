@@ -31,9 +31,9 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
   <script src='https://cdnjs.cloudflare.com/ajax/libs/async/3.2.0/async.min.js'></script>
   <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.min.css">
-  <link rel="stylesheet" type="text/css" href="js-css/dialog-polyfill.css">
-  <script src="js-css/dialog-polyfill.js"></script>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" type="text/css" href="css/dialog-polyfill.css">
+  <script src="js/dialog-polyfill.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
   <style>
     #view-source {
       position: fixed;
@@ -177,20 +177,29 @@
             <div class="mdl-tooltip" data-mdl-for="ygo_calc0_button_down">
               <h5>download</h5> <strong>file</strong>
             </div>
-            <label id="ygo_calc0_button_reset" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
-              <i class="material-icons" type="button">clear</i>
-            </label>
             <label id="ygo_calc0_button_preview" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
               <i class="material-icons" type="button">preview</i>
             </label>
             <div class="mdl-tooltip" data-mdl-for="ygo_calc0_button_preview">
-              preview selected deck in the format
+              <h4>preview deck</h4>in Japanese / English / id
             </div>
+
+            <br>
+            Deck
+            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mediumwidth">
+              <select class="mdl-textfield__input" name="ygo_calc0_input_deck" id="ygo_calc0_input_deck">
+              </select>
+              <label class="mdl-textfield__label" for="ygo_calc0_input_deck"></label>
+              <div class="mdl-tooltip" data-mdl-for="ygo_calc0_input_deck">
+                uploaded deck
+              </div>
+            </div>
+            <br>
             <label id="ygo_calc0_button_delete" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
               <i class="material-icons" type="button">delete</i>
             </label>
             <div class="mdl-tooltip" data-mdl-for="ygo_calc0_button_delete">
-              delete selected deck after warning
+              <h5>delete deck</h5>
             </div>
             <label id="ygo_calc0_button_copyCache" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
               <i class="material-icons" type="button">content_copy</i>
@@ -206,17 +215,6 @@
               <h5>delete cache</h5> of one deck
             </div>
 
-
-            <br>
-            Deck
-            <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label mediumwidth">
-              <select class="mdl-textfield__input" name="ygo_calc0_input_deck" id="ygo_calc0_input_deck">
-              </select>
-              <label class="mdl-textfield__label" for="ygo_calc0_input_deck"></label>
-              <div class="mdl-tooltip" data-mdl-for="ygo_calc0_input_deck">
-                uploaded deck
-              </div>
-            </div>
 
           </div>
         </div>
@@ -286,12 +284,6 @@
             </label>
             <div class="mdl-tooltip" data-mdl-for="ygo_calc3_button_erase">
             <h5>erase</h5> input
-            </div>
-            <label id="ygo_calc3_button_sync" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
-              <i class="material-icons" type="button">sync</i>
-            </label>
-            <div class="mdl-tooltip" data-mdl-for="ygo_calc3_button_sync">
-            <h5>sync</h5> input lists
             </div>
             <label id="ygo_calc3_button_undo" class="mdl-button mdl-js-button mdl-button--icon mdl-button--file">
               <i class="material-icons" type="button">undo</i>
@@ -563,8 +555,8 @@
   <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
   <script src="https://gmousse.github.io/dataframe-js/dist/dataframe.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/magnific-popup.js/1.1.0/jquery.magnific-popup.min.js"></script>
-  <script src="function.js"></script>
-  <script src="ygo-function.js"></script>
+  <script src="js/function.js"></script>
+  <script src="js/ygo-function.js"></script>
 
 </body>
 
