@@ -15,6 +15,7 @@ const ygo_db_complex_url = "data/ProjectIgnis/ygo_db_complex.csv";
 const listAddition = { search: [ "To", "From"], set: ["And", "Or"] };
 const lowerList = { hand: ["set"],set: ["set"], group: ["set", "hand", "group"], search: ["set"] }
 let GLOBAL_df;
+let GLOBAL_df_complex;
 let GLOBAL_data_main=[];
 let GLOBAL_deck_data=[];
 
@@ -65,15 +66,14 @@ function obtain_uploaded_deck(obtain_name = false, deck_name = null) {
   else return before_ygo_uploaded_deck;
 }
 
-await function obtain_main_deck(raw_data = false, deck_name="") {
+async function obtain_main_deck(raw_data = false, deck_name="") {
   let deck_data=GLOBAL_deck_data;
   if (deck_name) deck_data =await obtain_deck_data(deck_name);
   if (!deck_data) return [];
   if (raw_data) return deck_data;
   const main_index = deck_data.indexOf("#main");
   const extra_index = deck_data.indexOf("#extra");
-  const data_main=[];
-  data_main=deck_data
+  let data_main=deck_data
     .slice(main_index+1, extra_index)
     .filter(d => !d.startsWith("#"));
   GLOBAL_data_main=data_main;
@@ -219,11 +219,8 @@ function remake_itemConditionKey_options(input_ids, change_condition = true) {
     } else options = options_unlimited_strings;
     remake_option(options, input_ids.condition, (overWrite = true));
   }
-  //data_main=sessionStorage.data_main;
   const data_main=GLOBAL_data_main;
-  //const data_main = obtain_main_deck();
-  if (!data_main || !selected_item || !df) return;
-  //const df=sessionStorage.df;
+  if (!data_main || !selected_item) return;
   const df=GLOBAL_df;
   let sorted_array_tmp = df.filter(row => data_main.indexOf(row.get("id")) != -1)
           .toDict()[selected_item].slice().sort();
@@ -239,7 +236,7 @@ function remake_itemConditionKey_options(input_ids, change_condition = true) {
     const candidate_sets=operate_storage(`ygo_search_candidate`, "obtain")
     .filter(d=>d.split(seps2[1])[0]=="From").map(d=>d.split(seps2[1])[1]);
     const candidate_ids=ygo_search(candidate_sets);
-    const df_complex=sessionStorage.df_complex;
+    const df_complex=GLOBAL_df_complex;
     let autoset_complex=[];
     candidate_ids.forEach(ids=>ids.forEach(id=>{
       autoset_complex=autoset_complex.concat(df_complex.filter(row=>row.get("id")==id).toDict()["AutoSet"][0]
@@ -355,8 +352,6 @@ function remake_calc5_search_result() {
       ids_sum = ygo_search_check_2([ids_sum], ids)[0];
     }
   }
-  //const data_main = obtain_main_deck();
-  //data_main=sessionStorage.data_main;
   const data_main=GLOBAL_data_main;
 
   let ids_sum2 = [];
@@ -381,11 +376,11 @@ function remake_calc5_result_draw() {
   let initial_hand = [];
   let initial_ids = [];
   if (sessionStorage.ygo_tryDraw) {
-    ygo_tryDraw = JSON.parse(localStorage.ygo_tryDraw);
+    ygo_tryDraw = JSON.parse(sessionStorage.ygo_tryDraw);
     initial_hand = ygo_tryDraw.initial_hand.split(",");
     initial_ids = ygo_tryDraw.random_ids.split(",").slice(0, initial_hand.length);
   }
-  const judges_hands = ygo_judge(before_ygo_hands, initial_ids, true).then(_ => _);
+  const judges_hands = ygo_judge(before_ygo_hands, initial_ids, true);
   //const judges_groups=ygo_judge(before_ygo_hands, initial_ids, include_search=true).then(_=>_);
 
   const seps = seps_all["ygo_hand"];
@@ -408,7 +403,7 @@ function ygo_judge_speed(ids_sums_tmps, min_maxss, initial_ids, include_search =
   if (include_search) {
     for (ids_sums_tmp of ids_sums_tmps) {
       for (_ of Array(10))
-        ids_sums_tmp = ygo_search_check_2(ids_sums_tmp, ids).then(d => d);
+        ids_sums_tmp = ygo_search_check_2(ids_sums_tmp, ids);
     }
   }
   for (i = 0; i < ids_sums_tmps.length; i++) {
@@ -466,10 +461,10 @@ function ygo_judge(options, initial_ids, include_search = false) {
   for (i = 0; i < selectedSetss.length; i++) {
     let selectedSets = selectedSetss[i];
     let min_maxs = min_maxss[i];
-    let ids_sums_tmp = ygo_search(selectedSets).then(_ => _);
+    let ids_sums_tmp = ygo_search(selectedSets);
     if (include_search) {
       for (_ of Array(10)) {
-        ids_sums_tmp = ygo_search_check_2(ids_sums_tmp, ids).then(d => d);
+        ids_sums_tmp = ygo_search_check_2(ids_sums_tmp, ids);
       }
     }
     if (!ids_sums_tmp) continue;
@@ -513,7 +508,8 @@ function ygo_search(selectedSets, limited_ids = ["fromDeck"]) {
   if (limited_ids[0] == "fromAllCards") {
     data_main = df.toDict()["id"];
   }
-  if (limited_ids[0] == "fromDeck") data_main=obtain_main_deck();
+  if (limited_ids[0] == "fromDeck") data_main=GLOBAL_data_main;
+  if (!data_main) return [];
   if (limited_ids[0] != "fromAllCards") df_deck = df.filter(row => data_main.indexOf(row.get("id")) != -1);
 
   const seps = seps_all["ygo_set"];
@@ -621,21 +617,22 @@ function calc_from_hands(hands, initial_idss, output_id = "") {
   return judgess;
 }
 
-$(async function () {
+$(document).ready(async function () {
+  alert("a");
+  $("#ygo_calc3_input_item").val("Jap");
   sessionStorage.default_deck_names=await obtain_default_deck_names().then(d=>d.join(","));
-  df = await dfjs.DataFrame.fromCSV(ygo_db_url);
-  sessionStorage.df=df;
+  const df = await dfjs.DataFrame.fromCSV(ygo_db_url);
+  GLOBAL_df=df;
 
   const deck_name = obtain_uploaded_deck(true)[0];
-  GLOBAL_deck_data = await obtain_default_deck_data(deck_name);
-  GLOBAL_data_main = obtain_main_deck();
+  GLOBAL_deck_data = await obtain_default_deck_data(deck_name).then(_=>_);
+  GLOBAL_data_main = await obtain_main_deck().then(_=>_);
   const default_keys = Object.keys(df.toDict());
   localStorage.default_keys = default_keys.join(",");
   const initialList = "Hand";
   $("#ygo_input_list").val(initialList);
   remake_option(lowerList[initialList.toLowerCase()].map(d => d[0].toUpperCase() + d.slice(1)).concat(default_keys), "ygo_calc3_input_item");
 
-  $("#ygo_calc3_input_item").val("Jap");
   remake_calc0_result();
   remake_calc3_result();
   remake_calc3_option(true, false, true);
@@ -648,7 +645,7 @@ $(async function () {
   }
   localStorage.paren_mode=JSON.stringify(paren_mode);
   localStorage.ygo_searchId = JSON.stringify(ygo_search_check_1());
-  sessionStorage.df_complex=await dfjs.DataFrame.fromCSV(ygo_db_complex_url);
+  GLOBAL_df_complex=await dfjs.DataFrame.fromCSV(ygo_db_complex_url);
 
 });
 
@@ -854,7 +851,7 @@ $("#ygo_calc0_input_deck").on("click change", async function () {
   const deck_name = $("#ygo_calc0_input_deck").val();
   sessionStorage.deck_name = deck_name;
   GLOBAL_deck_data = await obtain_default_deck_data(deck_name);
-  GLOBAL_data_main=obtain_main_deck();
+  GLOBAL_data_main=await obtain_main_deck();
   remake_all();
 });
 
@@ -1243,10 +1240,7 @@ $("#ygo_calc5_input_list").on("change", function () {
 });
 
 $("#ygo_calc5_button_draw").on("click", async () => {
-  //const data_main = obtain_main_deck();
-  //data_main=sessionStorage.data_main;
   const data_main=GLOBAL_data_main;
-
 
   const deck_size = data_main.length;
   const random_tmp = [...Array(deck_size).keys()].map(_ => Math.random());
@@ -1254,7 +1248,6 @@ $("#ygo_calc5_button_draw").on("click", async () => {
   const random_ids = random_number.map(d => data_main[d]);
 
   if (!data_main) return;
-  //const df=sessionStorage.df;
   const df=GLOBAL_df;
   const initial_hand = random_number
     .slice(0, 5).map(d => data_main[d])
