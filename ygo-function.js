@@ -10,7 +10,7 @@ const seps_all = {
   ygo_group: ["-------", ":::::::", "_______"],
 };
 
-const ygo_db_url = "data/ProjectIgnis/ygo_db.csv";
+const ygo_db_url = "data/ProjectIgnis/ygo_db.csv" ;
 
 const listAddition = { search: ["From", "To"], set: ["And", "Or"] };
 const lowerList = { set: ["set"], hand: ["set", "hand"], group: ["set", "hand", "group"], search: ["set"] }
