@@ -194,7 +194,7 @@ a img{
   height: 800px;
   width: auto;
   background-color: #f3f3f3;
-  background: url('images/slide01.jpg') center 30% no-repeat;
+  background: url('../images/slide01.jpg') center 30% no-repeat;
   background-size: cover;
 }
 
@@ -203,7 +203,7 @@ a img{
   height: 800px;
   width: auto;
   background-color: #f3f3f3;
-  background: url('images/slide02.jpg') center 30% no-repeat;
+  background: url('../images/slide02.jpg') center 30% no-repeat;
   background-size: cover;
 }
 
@@ -212,7 +212,7 @@ a img{
   height: 800px;
   width: auto;
   background-color: #f3f3f3;
-  background: url('images/slide03.jpg') center 30% no-repeat;
+  background: url('../images/slide03.jpg') center 30% no-repeat;
   background-size: cover;
 }
 
@@ -339,21 +339,21 @@ a img{
 
 .android-wear-section {
   position: relative;
-  background: url('images/wear.png') center top no-repeat;
+  background: url('../images/wear.png') center top no-repeat;
   background-size: cover;
   height: 800px;
 }
 
 .android-wear-section2 {
   position: relative;
-  background: url('images/wear2.png') center top no-repeat;
+  background: url('../images/wear2.png') center top no-repeat;
   background-size: cover;
   height: 800px;
 }
 
 .android-wear-section3 {
   position: relative;
-  background: url('images/dis_py.png') center top no-repeat;
+  background: url('../images/dis_py.png') center top no-repeat;
   background-size: cover;
   height: 500px;
 }
@@ -424,21 +424,21 @@ a img{
   }
 
 .android-customized-section-image {
-  background: url('images/devices.jpg') center top no-repeat;
+  background: url('../images/devices.jpg') center top no-repeat;
   background-size: cover;
   height: 400px;
 }
 
 
 .android-customized-section-image2 {
-  background: url('images/devices2.png') center top no-repeat;
+  background: url('../images/devices2.png') center top no-repeat;
   background-size: cover;
   height: 400px;
 }
 
 .android-more-section {
-  padding: 80px 0;
-  max-width: 1044px;
+  padding: 80px 10px;
+  max-width: 90%;
   margin-left: auto;
   margin-right: auto;
 }
@@ -451,15 +451,20 @@ a img{
 }
 
 .android-card-container {
-  width: 1000px;
+  width: 90%;
 }
 
-@media screen and (min-width: 1281px) {
+@media screen and (min-width: 1601px) and (max-width: 1921px) {
+  .android-card-container {
+    width: 1600px;
+  }
+}
+
+@media screen and (min-width: 1281px) and (max-width: 1600px) {
   .android-card-container {
     width: 1280px;
   }
 }
-
 @media screen and (min-width: 961px) and (max-width: 1280px) {
   .android-card-container {
     width: 960px;

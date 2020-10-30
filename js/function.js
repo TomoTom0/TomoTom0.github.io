@@ -24,11 +24,9 @@ function Webhook2GS(content = "?jus", webhook_url = gs_webhook) {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
     };
-    console.log(webhook_url)
     fetch(webhook_url, {method, headers, body, mode: "no-cors", redirect:"follow"})
     .then((res)=> res.json())
-    .then(console.log)
-    .catch(console.error);
+    .then(d=>console.log(d))
 }
 
 // js_test : dice roll
@@ -64,13 +62,11 @@ $("#js_jus_button_card").on("click", function () {
     let team_p = $("#jus_input_team_card").val() - 0;
 
     var file_url = file_url_default2;
-    console.log(file_url);
     fetch(file_url)
         .then(res => {
             return res.text()
         })
         .then(data => {
-            //console.log(data);
             return data.split("\n")
                 .filter(d => { return !d.startsWith("#"); })
                 .filter(d => { return d.split(",").length == 4; }) // 例外処理は今は適当
@@ -83,24 +79,19 @@ $("#js_jus_button_card").on("click", function () {
                 return $(`#jus_check_${d}:checked`).val() == "on";
             })
             .map(d => {return sizes_all[d]});
-            console.log(sizes_selected);
-
+            
             var jus_stages_tmp = jus_stages.filter(d=> {return sizes_selected.indexOf(d[3]) != -1});
-            console.log(jus_stages_tmp);
-
+            
             var stage_out = jus_stages_tmp[Math.floor(Math.random() * jus_stages_tmp.length)];
             var rules_all = ["Point", "Death", "J-Symbol"];
             var rules_selected = rules_all.filter(d => {
                 return $(`#jus_check_${d}:checked`).val() == "on";
             });
-            console.log(rules_selected);
-
             var rule_out = rules_selected[Math.floor(Math.random() * rules_selected.length)];
             var team_out = "-";
             if (Math.random() < team_p) {
                 team_out = Math.floor(Math.random() * (play_num - 2) + 2);
             }
-            console.log(jus_stages, rules_all, rules_selected);
             //const content_pre="play team rule stage"
             const content1 = `${play_num} | 1&${team_out} | ${rule_out}`;
             const content2 = `${stage_out[0]}`;
@@ -112,13 +103,11 @@ $("#js_jus_button_card").on("click", function () {
 
 function jus(play_num = 4, team_p = 0.25, rule = "123", size = "123") {
     var file_url = file_url_default2;
-    console.log(file_url);
     fetch(file_url)
         .then(res => {
             return res.text()
         })
         .then(data => {
-            console.log(data);
             return data.split("\n").filter(d => { return !d.startsWith("#"); })
                 .filter(d => { return d.split(",").length == 4; }) // 例外処理は今は適当
                 .map(d => { return d.split(","); });
@@ -132,7 +121,6 @@ function jus(play_num = 4, team_p = 0.25, rule = "123", size = "123") {
             if (Math.random() < team_p) {
                 team_out = Math.floor(Math.random() * (play_num - 2) + 2);
             }
-            console.log(jus_stages, rules_all, rules_selected);
             //const content_pre="play team rule stage"
             const content = `${play_num} | 1&${team_out} | ${rule_out} | ${stage_out[0]}`;
             alert(content);
@@ -140,17 +128,14 @@ function jus(play_num = 4, team_p = 0.25, rule = "123", size = "123") {
 }
 
 function get_file(file_url = file_url_default2) {
-    console.log(file_url);
     fetch(file_url)
         .then(res => {
-            console.log(res.text());
             return res.blob().then(blob => ({
                 contentType: res.headers.get("Content-Type"),
                 blob: blob
             }));
         })
         .then(data => {
-            console.log(data.text());
             var file = new File([data.blob], file_url, { type: data.contentType });
         })
     return file;

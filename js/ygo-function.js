@@ -13,11 +13,16 @@ const seps_all = {
 const ygo_db_url = "data/ProjectIgnis/ygo_db.csv";
 const ygo_db_complex_url = "data/ProjectIgnis/ygo_db_complex.csv";
 const listAddition = { search: [ "To", "From"], set: ["And", "Or"] };
-const lowerList = { hand: ["set"],set: ["set"], group: ["set", "hand", "group"], search: ["set"] }
+const lowerList = { hand: ["set"],set: ["set"], group: ["set", "hand", "group"], search: ["set"] };
 let GLOBAL_df;
 let GLOBAL_df_complex;
 let GLOBAL_data_main=[];
 let GLOBAL_deck_data=[];
+
+function obtain_df(key=""){
+  if (!key) return GLOBAL_df;
+  if (key=="complex") return GLOBAL_df_complex;
+};
 
 
 function remake_option(options, select_id, overWrite = true, values = [], form = "select") {
@@ -28,8 +33,8 @@ function remake_option(options, select_id, overWrite = true, values = [], form =
   for (let i = 0; i < options.length; i++) {
     const option = $("<option>").text(options[i]).val(values[i]);
     select.append(option);
-  }
-}
+  };
+};
 
 function remake_button(body_id = "", button_contents = [], overWrite = true) {
   const body = $(`#${body_id}`);
@@ -44,13 +49,14 @@ function remake_button(body_id = "", button_contents = [], overWrite = true) {
 function remake_array(orig_array, form = "result", sep = "__") {
   if (form == "candidate") return orig_array.map(d => d.replace(new RegExp(`${sep}|__|\n`, "g"), "<br>")
     .replace(/:::::|::::|:::/g, "_").replace(/,/g, " ").replace(/_._/g, "_")
-    .replace(/\( \d \d/g, "(").replace(/\) \d \d/g, ")").replace(/(?<=(And|Or)) /g, "<br>"));
+    .replace(/\( \d \./g, "(").replace(/\) \d \./g, ")").replace(/(?=(And|Or)) /g, "<br>"));
   else if (form == "result") return orig_array.map(d => d.replace(new RegExp(`${sep}|__|\n`, "g"), "<br>")
     .replace(/_____|____|___|__/g, "<br>").replace(/:::::|::::|:::/g, "_").replace(/,/g, " ")
     .replace(/_\._|\._|_\./g, "_").replace(/\( \d \./g, "(").replace(/\. \) \d \./g, ")"));
   else if (form == "result_option") return orig_array.map(d => d.replace(/:::::|::::|:::/g, "_")
-    .replace(/_____|____|___/g, "_").replace(/,/g, " ").replace(/_._/g, "_").replace(/\( \d \./g, "(").replace(/\. \) \d \./g, ")"));
-}
+    .replace(/_____|____|___/g, "_").replace(/,/g, " ").replace(/_._/g, "_")
+    .replace(/\( \d \./g, "(").replace(/\. \) \d \./g, ")"));
+};
 
 
 function obtain_uploaded_deck(obtain_name = false, deck_name = null) {
@@ -64,7 +70,7 @@ function obtain_uploaded_deck(obtain_name = false, deck_name = null) {
     else return "";
   }
   else return before_ygo_uploaded_deck;
-}
+};
 
 async function obtain_main_deck(raw_data = false, deck_name="") {
   let deck_data=GLOBAL_deck_data;
@@ -73,13 +79,13 @@ async function obtain_main_deck(raw_data = false, deck_name="") {
   if (raw_data) return deck_data;
   const main_index = deck_data.indexOf("#main");
   const extra_index = deck_data.indexOf("#extra");
-  let data_main=deck_data
+  const data_main=deck_data
     .slice(main_index+1, extra_index)
     .filter(d => !d.startsWith("#"));
   GLOBAL_data_main=data_main;
   GLOBAL_deck_data=deck_data;
   return data_main;
-}
+};
 
 async function obtain_default_deck_names() {
   return await fetch("data/ProjectIgnis/deck/ydks.dat")
@@ -90,8 +96,8 @@ async function obtain_default_deck_names() {
 async function obtain_default_deck_data(deck_name) {
   if (!deck_name) return [];
   const file_url = `data/ProjectIgnis/deck/${deck_name}`;
-  data = await fetch(file_url).then(res => res.text());
-  deck_data=data.replace(/\r\n|\r(?=[^\n])/g, "\n").split("\n").filter(d => d);
+  const data = await fetch(file_url).then(res => res.text());
+  const deck_data=data.replace(/\r\n|\r(?=[^\n])/g, "\n").split("\n").filter(d => d);
   return deck_data;
 }
 
@@ -119,7 +125,7 @@ async function obtain_deck_data(deck_name=""){
   if (obtain_uploaded_deck(true).indexOf(deck_name)!=-1){
     return obtain_uploaded_deck(false, deck_name);
   }
-  const default_deck_names=sessionStorage.default_deck_names.split(",");
+  const default_deck_names=localStorage.default_deck_names.split(",");
   if (default_deck_names.indexOf(deck_name)!=-1){
     return obtain_default_deck_data(deck_name);
   }
@@ -199,7 +205,7 @@ function operate_storage(storage_key = "", operate = "", selected_sentence = "",
   }
 }
 
-function remake_itemConditionKey_options(input_ids, change_condition = true) {
+async function remake_itemConditionKey_options(input_ids, change_condition = true) {
   const item_numbers = ["id", "level", "PS", "atk", "def"];
   const item_limited_strings = ["attribute", "id"];
   const item_include_strings = ["cat_Jap", "cat_Eng", "desc_Jap", "desc_Eng", "type", "effect"];
@@ -219,12 +225,15 @@ function remake_itemConditionKey_options(input_ids, change_condition = true) {
     } else options = options_unlimited_strings;
     remake_option(options, input_ids.condition, (overWrite = true));
   }
-  const data_main=GLOBAL_data_main;
-  if (!data_main || !selected_item) return;
+  let data_main=GLOBAL_data_main;
+  if (!data_main) {
+    data_main=await obtain_main_deck();
+    GLOBAL_data_main=data_main;
+  }
   const df=GLOBAL_df;
+  if (!data_main || !selected_item) return;
   let sorted_array_tmp = df.filter(row => data_main.indexOf(row.get("id")) != -1)
           .toDict()[selected_item].slice().sort();
-
   let array_option = [];
   if (["type", "cat_Jap", "cat_Eng", "effect"].indexOf(selected_item) != -1) {
     sorted_array_tmp.forEach(d => array_option = array_option.concat(d.split(" ")));
@@ -251,32 +260,33 @@ function remake_itemConditionKey_options(input_ids, change_condition = true) {
 function remake_calc0_result() {
   const seps = seps_all["ygo_uploaded_deck"];
   let before_ygo_uploaded_deck = [];
-  if (localStorage.getItem("ygo_uploaded_deck"))
-    before_ygo_uploaded_deck = localStorage.getItem("ygo_uploaded_deck").split(seps[2]);
+  if (localStorage["ygo_uploaded_deck"])
+    before_ygo_uploaded_deck = localStorage["ygo_uploaded_deck"].split(seps[2]);
   let options = before_ygo_uploaded_deck.map(d => d.split(seps[1])[0]);
   remake_option(options, "ygo_calc0_input_anotherDeck");
   remake_option(options, "ygo_calc0_input_deck");
-  const fileList = sessionStorage.default_deck_names.split(",");
+  const fileList = localStorage.default_deck_names.split(",");
   remake_option(fileList, "ygo_calc0_input_deck", false);
   remake_option(fileList, "ygo_calc0_input_anotherDeck", false);
 }
 
 
 function remake_calc3_option(change_condition = true, change_item = true, change_addition = true) {
+  
   const selectedList = $("#ygo_calc3_input_list").val().toLowerCase();
   const selectedItem = $("#ygo_calc3_input_item").val();
+
   paren_mode=JSON.parse(localStorage.paren_mode);
   let paren=false;
-  if (paren_mode[selectedList]) paren=true;
-
+  if (paren_mode[selectedList]>0) paren=true;
+  //max-min
   if (paren || selectedList!= "hand"){
     $("#ygo_calc3_input_minNumber").prop("disabled", true);
     $("#ygo_calc3_input_maxNumber").prop("disabled", true);
   } else{
     $("#ygo_calc3_input_minNumber").prop("disabled", false);
     $("#ygo_calc3_input_maxNumber").prop("disabled", false);
-
-  }
+  }//addition
   if (change_addition || paren) {
     if (paren && operate_storage(`ygo_${selectedList}_candidate`, "obtain").length>paren_mode[selectedList]){
       remake_option(["And", "Or"], "ygo_calc3_input_addition");
@@ -292,9 +302,13 @@ function remake_calc3_option(change_condition = true, change_item = true, change
     }
     else remake_option([], "ygo_calc3_input_addition");
   }
+  //item
   if (change_item) {
-    default_keys = localStorage.default_keys.split(",");
-    let item_options=default_keys.concat(lowerList[selectedList].map(d => d[0].toUpperCase() + d.slice(1)));
+    const default_keys = localStorage.default_keys.split(",");
+    const lowerList_tmp=lowerList[selectedList]
+    .filter(d => operate_storage(`ygo_${d}`, "obtain").length>0)
+    .map(d[0].toUpperCase() + d.slice(1));
+    let item_options=default_keys.concat(lowerList_tmp);
     if (!paren && selectedList=="search" && operate_storage(`ygo_${selectedList}_candidate`, "obtain").length>0){
       item_options=["AutoSet"].concat(item_options);
       remake_option(item_options, "ygo_calc3_input_item");
@@ -302,6 +316,7 @@ function remake_calc3_option(change_condition = true, change_item = true, change
       remake_option(item_options, "ygo_calc3_input_item");
     }
   }
+  //keyword, condition
   if (["set", "hand", "group"].indexOf(selectedItem.toLowerCase()) != -1) {
     if (change_condition) remake_option(["=="], "ygo_calc3_input_condition");
     not_sorted_array = operate_storage(`ygo_${selectedItem.toLowerCase()}`, "obtain");
@@ -341,8 +356,8 @@ function remake_calc3_result() {
 }
 function remake_calc5_search_result() {
   let ids_sum = [];
-  if (sessionStorage.ids_sums)
-    sessionStorage.ids_sums.split("\n").forEach(d=>ids_sum=ids_sum.concat(d.split(",")));
+  if (localStorage.ids_sums)
+    localStorage.ids_sums.split("\n").forEach(d=>ids_sum=ids_sum.concat(d.split(",")));
   if ($("#ygo_calc5_check_search_include:checked").val() == "on") {
     let ids = { searcher: [], searched: [] }
     if (localStorage.ygo_searchId) {
@@ -359,7 +374,6 @@ function remake_calc5_search_result() {
   else ids_sum2 = data_main.filter(d => ids_sum.indexOf(d) != -1);
   if ($("#ygo_calc5_check_search_unique:checked").val() == "on")
     ids_sum2 = Array.from(new Set(ids_sum2));
-  //const df=sessionStorage.df;
   const df=GLOBAL_df;
   let content = ids_sum2
     .map(id => df.filter(row => row.get("id") === id).toDict()["Jap"][0]).slice().sort();
@@ -375,8 +389,8 @@ function remake_calc5_result_draw() {
 
   let initial_hand = [];
   let initial_ids = [];
-  if (sessionStorage.ygo_tryDraw) {
-    ygo_tryDraw = JSON.parse(sessionStorage.ygo_tryDraw);
+  if (localStorage.ygo_tryDraw) {
+    ygo_tryDraw = JSON.parse(localStorage.ygo_tryDraw);
     initial_hand = ygo_tryDraw.initial_hand.split(",");
     initial_ids = ygo_tryDraw.random_ids.split(",").slice(0, initial_hand.length);
   }
@@ -498,10 +512,9 @@ function ygo_judge(options, initial_ids, include_search = false) {
   });
 }
 
-function ygo_search(selectedSets, limited_ids = ["fromDeck"]) {
+async function ygo_search(selectedSets, limited_ids = ["fromDeck"]) {
   if (!selectedSets || !selectedSets[0]) return [];
   let data_main = limited_ids;
-  //const df=sessionStorage.df;
   const df=GLOBAL_df;
   if (!df) return;
   let df_deck = df;
@@ -553,7 +566,7 @@ function ygo_search(selectedSets, limited_ids = ["fromDeck"]) {
     if (!ids_sum[0] || ids_sum[0] == [""]) ids_sum = ["noMatch"];
     return ids_sum[0];
   });
-  sessionStorage.ids_sums = ids_sums.map(d => d.join(",")).join("\n");
+  localStorage.ids_sums = ids_sums.map(d => d.join(",")).join("\n");
   return ids_sums;
 }
 
@@ -617,37 +630,37 @@ function calc_from_hands(hands, initial_idss, output_id = "") {
   return judgess;
 }
 
-$(document).ready(async function () {
-  alert("a");
-  $("#ygo_calc3_input_item").val("Jap");
-  sessionStorage.default_deck_names=await obtain_default_deck_names().then(d=>d.join(","));
+$(async function () {
+
+  const default_deck_names=await obtain_default_deck_names();
+  localStorage.default_deck_names=default_deck_names.join(",");
   const df = await dfjs.DataFrame.fromCSV(ygo_db_url);
   GLOBAL_df=df;
 
-  const deck_name = obtain_uploaded_deck(true)[0];
-  GLOBAL_deck_data = await obtain_default_deck_data(deck_name).then(_=>_);
-  GLOBAL_data_main = await obtain_main_deck().then(_=>_);
+  const deck_name = default_deck_names[0];
+  GLOBAL_deck_data = await obtain_default_deck_data(deck_name);
+  GLOBAL_data_main = await obtain_main_deck();
   const default_keys = Object.keys(df.toDict());
   localStorage.default_keys = default_keys.join(",");
   const initialList = "Hand";
   $("#ygo_input_list").val(initialList);
-  remake_option(lowerList[initialList.toLowerCase()].map(d => d[0].toUpperCase() + d.slice(1)).concat(default_keys), "ygo_calc3_input_item");
-
-  remake_calc0_result();
-  remake_calc3_result();
-  remake_calc3_option(true, false, true);
-  remake_calc5_result();
-
-  paren_mode={set: 0, hand: 0, group:0, search:0 }
-  if (localStorage.paren_mode) paren_mode=JSON.parse(localStorage.paren_mode);
+  remake_option(default_keys.concat(lowerList[initialList.toLowerCase()].map(d => d[0].toUpperCase() + d.slice(1))), "ygo_calc3_input_item");
+  let paren_mode={set: 0, hand: 0, group:0, search:0 }
   for (key of Object.keys(paren_mode)){
     paren_mode[key]= operate_storage(`ygo_${key}_candidate`, "obtain").filter(d=>d.indexOf(",(,")).length;
   }
   localStorage.paren_mode=JSON.stringify(paren_mode);
+
+  remake_calc0_result();
+  remake_calc3_result();
+  remake_calc3_option(true, false, false);
+
+  remake_calc5_result();
+
   localStorage.ygo_searchId = JSON.stringify(ygo_search_check_1());
   GLOBAL_df_complex=await dfjs.DataFrame.fromCSV(ygo_db_complex_url);
-
-});
+  
+})
 
 $("#ygo_calc0_button_up").on("click", function () {
   const calc_id = $(this)[0].id.match(/ygo_calc\d/)[0];
@@ -682,7 +695,7 @@ $("#ygo_calc0_button_up").on("click", function () {
 
 function ygo_calc0_popup_up_fileFormat() {
   if (/^cache-limited/.test($("#ygo_calc0_popup_up_fileFormat").val())) {
-    const fileList = sessionStorage.default_deck_names.split(",");
+    const fileList = localStorage.default_deck_names.split(",");
     remake_option(obtain_uploaded_deck(true).concat(fileList), "ygo_calc0_popup_deck");
   }
   else {
@@ -709,10 +722,10 @@ $("#ygo_calc0_button_down").on("click", function () {
   body.append(div);
 
   const values = ["deck-id", "deck-Eng", "deck-Jap", "deck-FullWidth_Jap", "cache-limited", "cache-all", "cache-all_including_deck"];
-  const options = ["DEFAULT:deck (id)", "deck (Eng)", "deck (Jap)", "deck (Jap_FullWidth)", "cache about the selected deck", "all caches", "all caches including decks"];
+  const options = ["deck (.ydk)", "deck (Eng)", "deck (Jap)", "deck (Jap_FullWidth)", "cache about the selected deck", "all caches", "all caches including decks"];
 
   remake_option(options, "ygo_calc0_popup_down_fileFormat", true, values);
-  const fileList = sessionStorage.default_deck_names.split(",");
+  const fileList = localStorage.default_deck_names.split(",");
   remake_option(obtain_uploaded_deck(true).concat(fileList), "ygo_calc0_popup_deck");
   $(`#${popup_id}`).css("width", "320px");
   $(`#${popup_id}_title`).html(title);
@@ -737,7 +750,7 @@ function ygo_calc0_popup_down_fileFormat() {
     remake_option(cache_decks, "ygo_calc0_popup_deck");
   }
   else {
-    const fileList = sessionStorage.default_deck_names.split(",");
+    const fileList = localStorage.default_deck_names.split(",");
     remake_option(obtain_uploaded_deck(true).concat(fileList), "ygo_calc0_popup_deck");
   }
 }
@@ -762,7 +775,7 @@ async function ygo_calc0_popup_upload(obj) {
         try {
           d_splited[1].map(dd => {
             if (/^#/.test(dd)) return dd;
-            else return sessionStorage.df.filter(row => row.get(orig_format) == dd).toDict()["id"][0];
+            else return localStorage.df.filter(row => row.get(orig_format) == dd).toDict()["id"][0];
           });
         } catch {
           $("#ygo_calc0_result_card1").html($("#ygo_calc0_result_card1").html() + `<br> error occured with ${d_splited[0]}`);
@@ -849,7 +862,7 @@ async function ygo_calc0_popup_download() {
 
 $("#ygo_calc0_input_deck").on("click change", async function () {
   const deck_name = $("#ygo_calc0_input_deck").val();
-  sessionStorage.deck_name = deck_name;
+  localStorage.deck_name = deck_name;
   GLOBAL_deck_data = await obtain_default_deck_data(deck_name);
   GLOBAL_data_main=await obtain_main_deck();
   remake_all();
@@ -936,7 +949,7 @@ $("#ygo_calc0_button_copyCache").on("click", async function () {
     cache_decks = Array.from(new Set(cache_decks.concat(deck_names_tmp)));
   }
   remake_option(cache_decks, "ygo_calc0_popup_deckFrom");
-  const fileList = sessionStorage.default_deck_names.split(",");
+  const fileList = localStorage.default_deck_names.split(",");
   remake_option(obtain_uploaded_deck(true).concat(fileList), "ygo_calc0_popup_deckTo");
 
   $(`#${popup_id}`).css("width", "320px");
@@ -1239,7 +1252,7 @@ $("#ygo_calc5_input_list").on("change", function () {
   remake_calc5_result();
 });
 
-$("#ygo_calc5_button_draw").on("click", async () => {
+$("#ygo_calc5_button_draw").on("click", async function () {
   const data_main=GLOBAL_data_main;
 
   const deck_size = data_main.length;
@@ -1252,7 +1265,7 @@ $("#ygo_calc5_button_draw").on("click", async () => {
   const initial_hand = random_number
     .slice(0, 5).map(d => data_main[d])
     .map(ind => df.filter(row => row.get("id") == ind).toDict()["Jap"][0]);
-  sessionStorage.ygo_tryDraw = JSON.stringify({
+  localStorage.ygo_tryDraw = JSON.stringify({
     random_ids: random_ids.join(","),
     initial_hand: initial_hand.join(","),
   });
@@ -1261,7 +1274,7 @@ $("#ygo_calc5_button_draw").on("click", async () => {
 
 $("#ygo_calc5_button_calc").on("click", async function () {
   //const data_main = obtain_main_deck();
-  //data_main=sessionStorage.data_main;
+  //data_main=localStorage.data_main;
   const data_main=GLOBAL_data_main;
   const deck_size = data_main.length;
   $("#ygo_calc5_result_card1").html("Process .");
@@ -1339,10 +1352,21 @@ $("#ygo_calc5_button_rename").on("click", function () {
 
 
 $("#ygo_calc5_button_erase").on("click", async function () {
-
+  const obtain_url="https://www.db.yugioh-card.com/yugiohdb/member_deck.action?ope=1&cgid=d7f28e6c7de2eb2a9434ef5a105945c7&dno=18&request_locale=ja"
+  await $.get({url: obtain_url, dataType:"jsonp"})
+  .then(json=>{
+    console.log("success", json);
+  }).catch(json=>{
+    console.log(json.promise(), json.state());
+  })
+  //const ifr=$("<iframe>", {"src":obtain_url, "id":"tmp_iframe"});
+  //$("#tmp_id").append(ifr);
+  //console.log($("#tmp_iframe").html());
 
   $("#ygo_calc5_input_name").val("");
 });
+
+
 
 $("#ygo_calc5_button_delete").on("click", function () {
   const selectedList = $("#ygo_calc5_input_list").val().toLowerCase();
