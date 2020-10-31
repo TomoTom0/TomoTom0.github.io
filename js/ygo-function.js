@@ -281,12 +281,24 @@ function remake_calc3_option(change_condition = true, change_item = true, change
   if (paren_mode[selectedList]>0) paren=true;
   //max-min
   if (paren || selectedList!= "hand"){
-    $("#ygo_calc3_input_minNumber").prop("disabled", true);
-    $("#ygo_calc3_input_maxNumber").prop("disabled", true);
-  } else{
+    ["min", "max"].forEach(d=>{
+      $(`#ygo_calc3_input_${d}Number`).prop("disabled", true);
+      const div=$("#ygo_calc3_"+d);
+      const label=$("<label>", {"class":"mdl-textfield__label", "for":`#ygo_calc3_input_${d}Number`,
+       "id":`ygo_calc3_${d}_label`}).append(d[0].toUpperCase()+d.slice(1));
+      const tip=$("<div>", {"class":"mdl-tooltip", "data-mdl-for":`ygo_calc3_input_${d}Number`,
+       "id":`ygo_calc3_${d}_tip`}).append(d+" number of cards");
+      div.append(label);
+      div.append(tip);
+    })
+  } else {
     $("#ygo_calc3_input_minNumber").prop("disabled", false);
     $("#ygo_calc3_input_maxNumber").prop("disabled", false);
-  }//addition
+    ["min", "max"].forEach(d=>{
+      ["label", "tip"].forEach(dd=>{
+      if ($(`#ygo_cacl3_${d}_${dd}`)!=null) $(`#ygo_cacl3_${d}_${dd}`).remove();
+    })})
+  } //addition
   if (change_addition || paren) {
     if (paren && operate_storage(`ygo_${selectedList}_candidate`, "obtain").length>paren_mode[selectedList]){
       remake_option(["And", "Or"], "ygo_calc3_input_addition");
@@ -307,7 +319,6 @@ function remake_calc3_option(change_condition = true, change_item = true, change
     const default_keys = localStorage.default_keys.split(",");
     const lowerList_tmp=lowerList[selectedList]
     .filter(d => operate_storage(`ygo_${d}`, "obtain").length>0)
-    .map(d[0].toUpperCase() + d.slice(1));
     let item_options=default_keys.concat(lowerList_tmp);
     if (!paren && selectedList=="search" && operate_storage(`ygo_${selectedList}_candidate`, "obtain").length>0){
       item_options=["AutoSet"].concat(item_options);
@@ -659,8 +670,7 @@ $(async function () {
 
   localStorage.ygo_searchId = JSON.stringify(ygo_search_check_1());
   GLOBAL_df_complex=await dfjs.DataFrame.fromCSV(ygo_db_complex_url);
-  
-})
+}, {passive: true})
 
 $("#ygo_calc0_button_up").on("click", function () {
   const calc_id = $(this)[0].id.match(/ygo_calc\d/)[0];
@@ -1353,15 +1363,15 @@ $("#ygo_calc5_button_rename").on("click", function () {
 
 $("#ygo_calc5_button_erase").on("click", async function () {
   const obtain_url="https://www.db.yugioh-card.com/yugiohdb/member_deck.action?ope=1&cgid=d7f28e6c7de2eb2a9434ef5a105945c7&dno=18&request_locale=ja"
-  await $.get({url: obtain_url, dataType:"jsonp"})
+  await $.get({url: obtain_url, dataType:"jsonp", mode:"no-cors"})
   .then(json=>{
     console.log("success", json);
   }).catch(json=>{
     console.log(json.promise(), json.state());
   })
-  //const ifr=$("<iframe>", {"src":obtain_url, "id":"tmp_iframe"});
-  //$("#tmp_id").append(ifr);
-  //console.log($("#tmp_iframe").html());
+  const ifr=$("<iframe>", {"src":"view-source:"+obtain_url, "id":"tmp_iframe"});
+  $("#div_iframe").append(ifr);
+  console.log($("#tmp_iframe").html());
 
   $("#ygo_calc5_input_name").val("");
 });
